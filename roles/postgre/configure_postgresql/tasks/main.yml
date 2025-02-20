@@ -1,3 +1,17 @@
+- name: Распаковка дампа базы данных  
+  unarchive:  
+    src: "{{ dump_file_path }}"   
+    dest: "{{ temp_unpack_directory }}"  
+    remote_src: yes  
+  when: dump_file_path is defined  
+
+- name: Создаем базу данных из распакованного дампа  
+  postgresql_db:  
+    name: "{{ db_name }}"  
+    state: restore  
+    target: "{{ temp_unpack_directory }}/распакованный_dump_файл.sql"  
+  become_user: postgres  
+
 - name: Настраиваем удаленный доступ в postgresql.conf
   lineinfile:
     path: /var/lib/pgsql/{{ postgresql_version }}/data/postgresql.conf
