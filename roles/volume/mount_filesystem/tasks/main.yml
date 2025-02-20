@@ -1,0 +1,20 @@
+- name: Форматируем LV в ext4
+  filesystem:
+    dev: /dev/vg_data/lv_pgsql
+    fstype: ext4
+
+- name: Создаем точку монтирования
+  file:
+    path: /var/lib/pgsql
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: Монтируем LV в /var/lib/pgsql
+  mount:
+    path: /var/lib/pgsql
+    src: /dev/vg_data/lv_pgsql
+    fstype: ext4
+    state: mounted
+

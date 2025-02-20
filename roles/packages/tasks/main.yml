@@ -1,0 +1,7 @@
+- name: Установка пакетов
+  ansible.builtin.command:
+    cmd: "dnf install -y {{ item }}"
+  loop: "{{ packages }}"
+  register: result
+  ignore_errors: yes
+  changed_when: "'Nothing to do' not in result.stdout"

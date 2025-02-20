@@ -1,0 +1,24 @@
+packages:
+  - vim
+  - wget
+  - telnet
+  - mc
+  - nmap-ncat
+  - tcpdump
+  - autofs
+  - nfs-utils
+  - curl
+  - pwgen
+  - cloud-utils-growpart
+  - net-tools
+  - lsof
+  - bind-utils
+  - sysstat
+  - unzip
+  - bc
+  - sg3_utils
+  - sysfsutils
+  - nano
+  - git
+  - glibc-langpack-ru
+  - screen

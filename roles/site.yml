@@ -1,0 +1,11 @@
+- name: Этап 1
+  hosts: oracle_vm
+  become: yes
+  roles:
+    - install_postgresql
+    - configure_postgresql
+    - packages
+    - configure_sudo
+    - create_usres
+    - mount_filesystem
+    - setup_lvm

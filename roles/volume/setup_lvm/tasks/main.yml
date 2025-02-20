@@ -1,0 +1,23 @@
+- name: Убедимся, что диск доступен
+  command: lsblk
+  register: lsblk_output
+  changed_when: false
+
+- name: Создаем физический том (PV)
+  lvol:
+    vg: vg_data
+    pv: /dev/sdb
+    state: present
+
+- name: Создаем группу томов (VG)
+  lvg:
+    vg: vg_data
+    pvs: /dev/sdb
+    state: present
+
+- name: Создаем логический том (LV)
+  lvol:
+    vg: vg_data
+    lv: lv_pgsql
+    size: 100%FREE
+    state: present

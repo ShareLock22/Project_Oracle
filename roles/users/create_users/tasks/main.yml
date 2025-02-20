@@ -1,0 +1,8 @@
+- name: Create users
+  user:
+    name: "{{ item.name }}"
+    state: present
+    groups: wheel
+    append: yes
+    password: "{{ item.password | password_hash('sha512') }}"
+  loop: "{{ users }}"
