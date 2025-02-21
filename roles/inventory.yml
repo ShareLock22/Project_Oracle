@@ -1,7 +1,7 @@
 all:
   hosts:
     oracle_vm:
-      ansible_host: 10.3.26.103
+      ansible_host: 10.3.26.101
       ansible_user: root
       ansible_ssh_private_key_file: ~/.ssh/id_rsa
       #ansible_python_interpreter: /usr/bin/python3.11

@@ -1,6 +1,6 @@
 - name: Форматируем LV в ext4
   filesystem:
-    dev: /dev/vg_data/lv_pgsql
+    dev: /dev/ol/lv_pgsql
     fstype: ext4
 
 - name: Создаем точку монтирования

@@ -1,6 +1,6 @@
 - name: Уменьшаем файловую систему на LV
   command: resize2fs /dev/ol/root 10G
-  when: "'/dev/ol/root' in ansible_mounts and ansible_mounts['/dev/ol/root'].size_total > 10G"
+  when: "'/dev/ol/root' in ansible_mounts and ansible_mounts['/dev/ol/root'].size_total > 10737418240"
 
 - name: Уменьшаем размер LV
   lvol:
@@ -8,11 +8,18 @@
     lv: root
     size: 10G
     state: present
+    force: true
     resizefs: false
 
-- name: Создаем новый логический том (LV) в VG ol
+- name: Проверяем наличие логического тома lv_pgsql
+  command: lvdisplay /dev/ol/lv_pgsql
+  register: lv_pgsql_check
+  ignore_errors: true
+
+- name: Создаем новый логический том (LV) в VG ol, если он не существует
   lvol:
     vg: ol
     lv: lv_pgsql
     size: 100%FREE
     state: present
+  when: lv_pgsql_check.rc != 0

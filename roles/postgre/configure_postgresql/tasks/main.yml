@@ -1,6 +1,6 @@
 ---
 - name: Install PostgreSQL packages
-  dnf:
+  yum:
     name:
       - postgresql
       - postgresql-server

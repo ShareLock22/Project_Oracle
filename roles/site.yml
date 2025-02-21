@@ -2,11 +2,11 @@
   hosts: oracle_vm
   become: yes
   roles:
-    - packages
-    - users/create_usres
-    - users/configure_sudo
-    - volume/setup_lvm
-    - volume/mount_filesystem
+    #- packages
+    #- users/create_users
+    #- users/configure_sudo
+    #- volume/setup_lvm
+    #- volume/mount_filesystem
     - postgre/configure_postgresql
    
     
