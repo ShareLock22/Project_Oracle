@@ -14,7 +14,7 @@
 - name: Монтируем LV в /var/lib/pgsql
   mount:
     path: /var/lib/pgsql
-    src: /dev/vg_data/lv_pgsql
+    src:  /dev/ol/lv_pgsql
     fstype: ext4
     state: mounted
 
