@@ -1,5 +1,0 @@
-db_name: demo_db
-db_user: demo_user
-db_password: 12345678
-dump_file_path: ~/demo-small.zip 
-temp_unpack_directory: ~/

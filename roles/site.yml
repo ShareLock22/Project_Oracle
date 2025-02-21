@@ -7,7 +7,6 @@
     - users/configure_sudo
     - volume/setup_lvm
     - volume/mount_filesystem
-    - postgre/install_postgresql
     - postgre/configure_postgresql
    
     
