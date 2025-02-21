@@ -1,23 +1,18 @@
-- name: Убедимся, что диск доступен
-  command: lsblk
-  register: lsblk_output
-  changed_when: false
+- name: Уменьшаем файловую систему на LV
+  command: resize2fs /dev/ol/root 10G
+  when: "'/dev/ol/root' in ansible_mounts and ansible_mounts['/dev/ol/root'].size_total > 10G"
 
-- name: Создаем физический том (PV)
+- name: Уменьшаем размер LV
   lvol:
-    vg: vg_data
-    pv: /dev/sdb
+    vg: ol
+    lv: root
+    size: 10G
     state: present
+    resizefs: false
 
-- name: Создаем группу томов (VG)
-  lvg:
-    vg: vg_data
-    pvs: /dev/sdb
-    state: present
-
-- name: Создаем логический том (LV)
+- name: Создаем новый логический том (LV) в VG ol
   lvol:
-    vg: vg_data
+    vg: ol
     lv: lv_pgsql
     size: 100%FREE
     state: present
