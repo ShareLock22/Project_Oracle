@@ -1,20 +1,52 @@
-- name: Форматируем LV в ext4
-  filesystem:
-    dev: /dev/ol/lv_pgsql
-    fstype: ext4
+---
+- name: Install PostgreSQL packages
+  yum:
+    name:
+      - postgresql
+      - postgresql-server
+    state: present
 
-- name: Создаем точку монтирования
-  file:
-    path: /var/lib/pgsql
-    state: directory
+- name: Install Python packages
+  pip:
+    name: psycopg2-binary
+    state: present
+
+- name: Initialize PostgreSQL with checksums
+  shell: "postgresql-setup initdb --locale=en_US.UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8 --checksums"
+  args:
+    creates: /var/lib/pgsql/data/PG_VERSION
+
+- name: Start and enable PostgreSQL service
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Configure postgresql.conf
+  template:
+    src: postgresql.conf.j2
+    dest: /var/lib/pgsql/data/postgresql.conf
     owner: postgres
     group: postgres
-    mode: '0755'
+    mode: '0600'
+  notify: restart postgres
 
-- name: Монтируем LV в /var/lib/pgsql
-  mount:
-    path: /var/lib/pgsql
-    src:  /dev/ol/lv_pgsql
-    fstype: ext4
-    state: mounted
+- name: Configure pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: /var/lib/pgsql/data/pg_hba.conf
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  notify: restart postgres
 
+- name: Extract database dump from remote host
+  unarchive:
+    src: ~/
+    dest: /tmp/
+    remote_src: yes
+
+- name: Restore database from dump
+  shell: "pg_restore -U postgres -d postgres /tmp/database_dump.sql"
+  become: yes
+  become_user: postgres

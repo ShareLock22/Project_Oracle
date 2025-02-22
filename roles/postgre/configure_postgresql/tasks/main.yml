@@ -1,4 +1,3 @@
----
 - name: Install PostgreSQL packages
   yum:
     name:
