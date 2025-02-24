@@ -2,10 +2,10 @@
   hosts: oracle_vm
   become: yes
   roles:
-    - packages
-    - users/create_users
-    - users/configure_sudo
-    - postgre/configure_postgresql
+  #  - packages
+  #  - users/create_users
+  #  - users/configure_sudo
+  #  - postgre/configure_postgresql
     - postgre/demo_db
    
     

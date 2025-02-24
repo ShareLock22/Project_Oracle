@@ -1,3 +1,8 @@
+- name: Удаление старой директории данных PostgreSQL
+  file:
+    path: "{{ postgres_data_dir }}"
+    state: absent
+
 - name: Создание директории для данных PostgreSQL
   file:
     path: "{{ postgres_data_dir }}"
@@ -7,22 +12,23 @@
     mode: '0700'
 
 - name: Инициализация PostgreSQL с контрольными суммами
-  shell: "postgresql-setup initdb --locale=en_US.UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8 --checksums"
+  become: yes
+  become_user: postgres
+  shell: "initdb --locale=en_US.UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8 --data-checksums -D {{ postgres_data_dir }}"
   args:
     creates: "{{ postgres_data_dir }}/PG_VERSION"
 
-- name: Настройка postgresql.conf
-  template:
-    src: postgresql.conf.j2
-    dest: "{{ postgres_data_dir }}/postgresql.conf"
-    owner: postgres
-    group: postgres
-    mode: '0600'
+- name: Настройка listen_addresses в postgresql.conf
+  lineinfile:
+    path: "{{ postgres_data_dir }}/postgresql.conf"
+    regexp: '^listen_addresses ='
+    line: "listen_addresses = '*'"
+    state: present
   notify: restart postgres
 
 - name: Настройка pg_hba.conf
   template:
-    src: pg_hba.conf.j2
+    src: postgre/configure_postgresql/templates/pg_hba.conf.j2  # Убедитесь, что путь указан правильно
     dest: "{{ postgres_data_dir }}/pg_hba.conf"
     owner: postgres
     group: postgres
