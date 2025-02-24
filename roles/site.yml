@@ -6,5 +6,6 @@
     - users/create_users
     - users/configure_sudo
     - postgre/configure_postgresql
+    - postgre/demo_db
    
     
