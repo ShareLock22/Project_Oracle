@@ -18,6 +18,14 @@
   args:
     creates: "{{ postgres_data_dir }}/PG_VERSION"
 
+- name: Настройка unix_socket_directories в postgresql.conf
+  lineinfile:
+    path: "{{ postgres_data_dir }}/postgresql.conf"
+    regexp: '^#?unix_socket_directories'
+    line: "unix_socket_directories = '/var/run/postgresql'"
+    state: present
+  notify: restart postgres
+
 - name: Настройка listen_addresses в postgresql.conf
   lineinfile:
     path: "{{ postgres_data_dir }}/postgresql.conf"
