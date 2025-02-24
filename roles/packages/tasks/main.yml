@@ -5,3 +5,8 @@
   register: result
   ignore_errors: yes
   changed_when: "'Nothing to do' not in result.stdout"
+
+- name: Установка PostgreSQL и необходимых пакетов
+  yum:
+    name: "{{ postgres_packages }}"
+    state: present

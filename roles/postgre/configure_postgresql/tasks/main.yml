@@ -1,51 +1,36 @@
-- name: Install PostgreSQL packages
-  yum:
-    name:
-      - postgresql
-      - postgresql-server
-    state: present
+- name: Создание директории для данных PostgreSQL
+  file:
+    path: "{{ postgres_data_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
 
-- name: Install Python packages
-  pip:
-    name: psycopg2-binary
-    state: present
-
-- name: Initialize PostgreSQL with checksums
+- name: Инициализация PostgreSQL с контрольными суммами
   shell: "postgresql-setup initdb --locale=en_US.UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8 --checksums"
   args:
-    creates: /var/lib/pgsql/data/PG_VERSION
+    creates: "{{ postgres_data_dir }}/PG_VERSION"
 
-- name: Start and enable PostgreSQL service
+- name: Настройка postgresql.conf
+  template:
+    src: postgresql.conf.j2
+    dest: "{{ postgres_data_dir }}/postgresql.conf"
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  notify: restart postgres
+
+- name: Настройка pg_hba.conf
+  template:
+    src: pg_hba.conf.j2
+    dest: "{{ postgres_data_dir }}/pg_hba.conf"
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  notify: restart postgres
+
+- name: Запуск и включение PostgreSQL
   service:
     name: postgresql
     state: started
     enabled: yes
-
-- name: Configure postgresql.conf
-  template:
-    src: postgresql.conf.j2
-    dest: /var/lib/pgsql/data/postgresql.conf
-    owner: postgres
-    group: postgres
-    mode: '0600'
-  notify: restart postgres
-
-- name: Configure pg_hba.conf
-  template:
-    src: pg_hba.conf.j2
-    dest: /var/lib/pgsql/data/pg_hba.conf
-    owner: postgres
-    group: postgres
-    mode: '0600'
-  notify: restart postgres
-
-- name: Extract database dump from remote host
-  unarchive:
-    src: ~/
-    dest: /tmp/
-    remote_src: yes
-
-- name: Restore database from dump
-  shell: "pg_restore -U postgres -d postgres /tmp/database_dump.sql"
-  become: yes
-  become_user: postgres

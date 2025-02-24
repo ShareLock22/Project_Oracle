@@ -22,3 +22,8 @@ packages:
   - git
   - glibc-langpack-ru
   - screen
+
+postgres_packages:
+  - postgresql
+  - postgresql-server
+  - python3-psycopg2
