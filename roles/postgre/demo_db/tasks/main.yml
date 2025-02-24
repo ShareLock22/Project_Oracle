@@ -1,5 +1,5 @@
 - name: Восстановление демо-базы данных
-  shell: "pg_restore -U postgres -d {{ demo_db_name }} ~/demo_db.sql"
+  shell: "pg_restore -U postgres -d {{ demo_db_name }} ~/{{ demo_db_name }}"
   become_user: postgres
 
 - name: Создание пользователя PostgreSQL
