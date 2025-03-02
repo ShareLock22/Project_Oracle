@@ -1,0 +1,18 @@
+- name: Установка etcd
+  apt:
+    name: etcd
+    state: present
+
+- name: Настройка etcd
+  template:
+    src: etcd.conf.j2
+    dest: /etc/etcd/etcd.conf
+    owner: etcd
+    group: etcd
+    mode: '0644'
+
+- name: Запуск и включение etcd
+  service:
+    name: etcd
+    state: started
+    enabled: yes

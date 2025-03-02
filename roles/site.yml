@@ -1,11 +1,17 @@
-- name: Этап 1
-  hosts: oracle_vm
+- name: Этап 1 - Настройка базовых пакетов и пользователей
+  hosts: node1
   become: yes
   roles:
-  #  - packages
-  #  - users/create_users
-  #  - users/configure_sudo
+    - packages
+    - users/create_users
+    - users/configure_sudo
     - postgre/configure_postgresql
     - postgre/demo_db
-   
-    
+
+- name: Этап 2 - Настройка Etcd, PostgreSQL и Patroni на всех узлах
+  hosts: all
+  become: yes
+  roles:
+    - etcd
+    - postgresql
+    - patroni

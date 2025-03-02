@@ -1,10 +1,23 @@
-# pg_hba.conf template  
-# TYPE  DATABASE        USER            ADDRESS                 METHOD  
-# Локальные подключения  
-local   all             all                                     peer  
-# IPv4 подключения  
-host    all             all             127.0.0.1/32            md5  
-# IPv6 подключения  
-host    all             all             ::1/128                 md5  
-# Подключения из сети  
+# pg_hba.conf template
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# Локальные подключения
+local   all             all                                     peer
+
+# IPv4 подключения
+host    all             all             127.0.0.1/32            md5
+
+# IPv6 подключения
+host    all             all             ::1/128                 md5
+
+# Подключения из сети
 host    all             all             0.0.0.0/0               md5
+
+# Доступ для репликации между узлами кластера
+host    replication     replicator      {{ ansible_host }}/32   md5
+
+# Доступ для администратора Patroni
+host    all             admin           {{ ansible_host }}/32   md5
+
+# Доступ для суперпользователя
+host    all             postgres        {{ ansible_host }}/32   md5

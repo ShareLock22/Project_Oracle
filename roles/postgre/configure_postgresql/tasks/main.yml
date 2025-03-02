@@ -36,7 +36,7 @@
 
 - name: Настройка pg_hba.conf
   template:
-    src: postgre/configure_postgresql/templates/pg_hba.conf.j2  # Убедитесь, что путь указан правильно
+    src: postgre/configure_postgresql/templates/pg_hba.conf.j2 
     dest: "{{ postgres_data_dir }}/pg_hba.conf"
     owner: postgres
     group: postgres

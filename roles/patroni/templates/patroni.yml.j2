@@ -1,0 +1,59 @@
+scope: postgres
+namespace: /service/
+name: "{{ inventory_hostname }}"
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: "{{ ansible_host }}:8008"
+
+etcd:
+  hosts: "{% for host in groups['all'] %}{{ hostvars[host].ansible_host }}:2379{% if not loop.last %},{% endif %}{% endfor %}"
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+      parameters:
+        listen_addresses: '*'
+        hot_standby: 'on'
+        wal_level: 'replica'
+        max_wal_senders: 5
+        wal_keep_segments: 8
+        max_replication_slots: 5
+        synchronous_commit: 'on'
+        synchronous_standby_names: '*'
+
+  initdb:
+  - encoding: UTF8
+  - locale: en_US.UTF-8
+  - data-checksums
+
+  pg_hba:
+  - host replication all 0.0.0.0/0 md5
+  - host all all 0.0.0.0/0 md5
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: "{{ ansible_host }}:5432"
+  data_dir: "{{ postgres_data_dir }}"
+  bin_dir: /usr/lib/postgresql/12/bin
+  pgpass: /var/lib/postgresql/.pgpass
+  authentication:
+    replication:
+      username: replicator
+      password: replicator
+    superuser:
+      username: postgres
+      password: postgres
+  parameters:
+    unix_socket_directories: '/var/run/postgresql'
+
+tags:
+  nofailover: false
+  noloadbalance: false
+  clonefrom: false
+  nosync: false
