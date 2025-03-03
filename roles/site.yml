@@ -16,5 +16,5 @@
     patroni_config_dir: /etc/patroni
   roles:
     - etcd
-    - stanby_configure
+    - standby_configure
     - patroni
