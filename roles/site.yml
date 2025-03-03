@@ -1,17 +1,20 @@
-- name: Этап 1 - Настройка базовых пакетов и пользователей
-  hosts: node1
-  become: yes
-  roles:
-    - packages
-    - users/create_users
-    - users/configure_sudo
-    - postgre/configure_postgresql
-    - postgre/demo_db
+#- name: Этап 1 - Настройка базовых пакетов и пользователей
+#  hosts: node1
+#  become: yes
+#  roles:
+#    - packages
+#    - users/create_users
+#    - users/configure_sudo
+#    - postgre/configure_postgresql
+#    - postgre/demo_db
 
 - name: Этап 2 - Настройка Etcd, PostgreSQL и Patroni на всех узлах
   hosts: all
   become: yes
+  vars:
+    postgres_data_dir: /var/lib/pgsql/data
+    patroni_config_dir: /etc/patroni
   roles:
     - etcd
-    - postgresql
+    - stanby_configure
     - patroni

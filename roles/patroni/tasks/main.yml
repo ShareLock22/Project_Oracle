@@ -1,15 +1,25 @@
+---
 - name: Установка Patroni
-  apt:
+  dnf:
     name: patroni
     state: present
 
-- name: Настройка Patroni
+- name: Создание директории для конфигурации Patroni
+  file:
+    path: "{{ patroni_config_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: Настройка конфигурации Patroni
   template:
     src: patroni.yml.j2
-    dest: /etc/patroni/patroni.yml
+    dest: "{{ patroni_config_dir }}/patroni.yml"
     owner: postgres
     group: postgres
     mode: '0644'
+  notify: restart patroni
 
 - name: Запуск и включение Patroni
   service:

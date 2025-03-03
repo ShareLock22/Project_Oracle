@@ -1,0 +1,56 @@
+---
+- name: Установка PostgreSQL
+  dnf:
+    name:
+      - postgresql-server
+      - postgresql-contrib
+    state: present
+
+- name: Проверка существования базы данных
+  stat:
+    path: "{{ postgres_data_dir }}/PG_VERSION"
+  register: pg_data_exists
+
+- name: Инициализация PostgreSQL (если база данных не существует)
+  become: yes
+  become_user: postgres
+  shell: "initdb --locale=en_US.UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8 --data-checksums -D {{ postgres_data_dir }}"
+  args:
+    creates: "{{ postgres_data_dir }}/PG_VERSION"
+  when: not pg_data_exists.stat.exists
+
+- name: Настройка параметров PostgreSQL (если база данных существует)
+  become: yes
+  become_user: postgres
+  lineinfile:
+    path: "{{ postgres_data_dir }}/postgresql.conf"
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }} = '{{ item.value }}'"
+    state: present
+  with_items:
+    - { key: "listen_addresses", value: "*" }
+    - { key: "wal_level", value: "replica" }
+    - { key: "max_wal_senders", value: "5" }
+    - { key: "max_replication_slots", value: "5" }
+    - { key: "hot_standby", value: "on" }
+    - { key: "synchronous_commit", value: "on" }
+  when: pg_data_exists.stat.exists
+  notify: restart postgresql
+
+- name: Настройка pg_hba.conf (если база данных существует)
+  become: yes
+  become_user: postgres
+  blockinfile:
+    path: "{{ postgres_data_dir }}/pg_hba.conf"
+    block: |
+      host replication replicator 0.0.0.0/0 md5
+      host all all 0.0.0.0/0 md5
+  when: pg_data_exists.stat.exists
+  notify: restart postgresql
+
+- name: Создание пользователя для репликации (если база данных существует)
+  become: yes
+  become_user: postgres
+  shell: |
+    psql -c "CREATE ROLE replicator WITH REPLICATION LOGIN PASSWORD 'replicator';"
+  when: pg_data_exists.stat.exists

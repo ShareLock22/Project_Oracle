@@ -25,7 +25,7 @@ bootstrap:
         wal_keep_segments: 8
         max_replication_slots: 5
         synchronous_commit: 'on'
-        synchronous_standby_names: '*'
+        synchronous_standby_names: 'node2'  
 
   initdb:
   - encoding: UTF8
