@@ -22,8 +22,10 @@ packages:
   - git
   - glibc-langpack-ru
   - screen
+  - barman
 
 postgres_packages:
   - postgresql
   - postgresql-server
   - python3-psycopg2
+  - postgresql-contrib

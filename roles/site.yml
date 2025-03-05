@@ -9,12 +9,13 @@
 #    - postgre/demo_db
 
 - name: Этап 2 - Настройка Etcd, PostgreSQL и Patroni на всех узлах
-  hosts: all
+  hosts: node1
   become: yes
   vars:
     postgres_data_dir: /var/lib/pgsql/data
     patroni_config_dir: /etc/patroni
   roles:
-    - etcd
-    - standby_configure
-    - patroni
+    - dumps
+#    - etcd
+#    - standby_configure
+#    - patroni

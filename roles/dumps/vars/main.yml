@@ -1,1 +1,18 @@
-some text here
+---
+# Общие параметры
+backup_dir: /var/tmp/postgres_backups
+pg_data_dir: /var/lib/pgsql/data
+database_name: demo
+postgres_host: localhost
+postgres_cluster_name: main
+
+# pg_probackup параметры
+pg_probackup_dir: /var/tmp/pg_probackup
+
+# Barman параметры
+barman_backup_dir: /var/tmp/barman
+
+# WAL-G параметры
+#walg_backup_dir: /var/backup/walg
+#walg_config_path: /etc/wal-g.yaml
+#walg_retention_days: "7 DAYS"
