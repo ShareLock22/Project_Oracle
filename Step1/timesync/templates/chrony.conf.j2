@@ -1,0 +1,9 @@
+# Managed by Ansible
+{% for server in timesync_ntp_servers %}
+pool {{ server }} iburst
+{% endfor %}
+
+# Other configurations
+{% for config in timesync_chrony_config %}
+{{ config }}
+{% endfor %}

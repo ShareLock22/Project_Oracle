@@ -1,0 +1,10 @@
+---
+timesync_ntp_servers:
+  - pool.ntp.org
+  - ntp.ubuntu.com
+  - time.google.com
+
+timesync_chrony_config:
+  - "makestep 1.0 3"
+  - "maxdistance 1.0"
+  - "logdir /var/log/chrony"

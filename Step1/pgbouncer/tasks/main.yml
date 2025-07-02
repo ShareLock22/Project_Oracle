@@ -1,0 +1,37 @@
+---
+- name: Установка PgBouncer
+  apt:
+    name: pgbouncer
+    state: present
+    update_cache: yes
+
+- name: Создание директории для логов
+  file:
+    path: /var/log/postgresql
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0755'
+
+- name: Копирование конфигурации PgBouncer
+  template:
+    src: pgbouncer.ini.j2
+    dest: /etc/pgbouncer/pgbouncer.ini
+    owner: postgres
+    group: postgres
+    mode: '0644'
+
+- name: Генерация файла userlist.txt
+  lineinfile:
+    dest: /etc/pgbouncer/userlist.txt
+    line: '"{{ pgbouncer_user }}" "{{ pgbouncer_user_hash }}"'
+    create: yes
+    owner: postgres
+    group: postgres
+    mode: '0600'
+
+- name: Перезапуск PgBouncer
+  systemd:
+    name: pgbouncer
+    state: restarted
+    enabled: yes

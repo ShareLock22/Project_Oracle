@@ -1,0 +1,10 @@
+/var/log/patroni/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    copytruncate
+    create 0644 postgres postgres
+}

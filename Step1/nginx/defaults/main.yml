@@ -1,0 +1,8 @@
+pgadmin_data_dir: "/var/lib/pgadmin"
+pgadmin_user: "1000"  # UID пользователя внутри контейнера
+pgadmin_group: "1000" # GID группы
+pgadmin_port: 5050
+pgadmin_default_email: "admin@example.com"
+pgadmin_default_password: "12345678"
+pgadmin_fix_ownership: true
+nginx_server_name: nginx.reverse

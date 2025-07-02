@@ -1,0 +1,36 @@
+all:
+  hosts:
+    node1:
+      ansible_host: 192.168.0.108
+      ansible_user: root
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      install: true
+    node2:
+      ansible_host: 192.168.0.109
+      ansible_user: root
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      install: true
+    node3:
+      ansible_host: 192.168.0.110
+      ansible_user: root
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      install: true
+    node4:
+      ansible_host: 192.168.0.104
+      ansible_user: root
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      install: true
+
+etcd: 
+  hosts:
+    node1:
+    node2:
+    node3:
+
+proxy:
+  hosts:
+    node4:
+
+zabbix:
+  hosts:
+    node4:

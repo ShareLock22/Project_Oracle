@@ -1,0 +1,17 @@
+[Unit]
+Description=High availability PostgreSQL Cluster
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=postgres
+Group=postgres
+ExecStart=/usr/bin/patroni /etc/patroni/patroni.yml
+Restart=always
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/postgresql/13/bin
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=patroni
+
+[Install]
+WantedBy=multi-user.target

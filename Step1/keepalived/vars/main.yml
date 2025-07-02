@@ -1,0 +1,4 @@
+--- 
+vip_address: "192.168.0.100"
+keepalived_auth_pass: "12345678"
+keepalived_interface: enp0s1

@@ -1,0 +1,26 @@
+# patroni.yml
+patroni_scope: my_cluster
+patroni_namespace: "/service/"
+patroni_name: "{{ inventory_hostname }}"
+patroni_restapi_connect_address: "{{ ansible_default_ipv4.address }}:8008"
+patroni_postgresql_connect_address: "{{ ansible_default_ipv4.address }}:5432"
+
+# etcd
+patroni_etcd_hosts:
+  - "192.168.0.108:2379"
+  - "192.168.0.109:2379"
+  - "192.168.0.110:2379"
+
+# PostgreSQL
+patroni_pg_data_dir: /var/lib/postgresql/13/main
+patroni_pg_bin_dir: /usr/lib/postgresql/13/bin
+patroni_wal_archive_dir: /var/lib/postgresql/wal_archive
+
+# SSL
+patroni_ssl_dir: /etc/patroni/ssl
+patroni_ssl_cert_owner: postgres
+patroni_ssl_cert_group: postgres
+
+# ?????
+cleanup_etcd_state: false
+remove_old_dirs: true

@@ -1,0 +1,104 @@
+---
+- name: Ensure PostgreSQL backup directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+  loop:
+    - "{{ backup_dir }}"
+    - "{{ pg_probackup_dir }}"
+    - "{{ barman_backup_dir }}"
+   # - "{{ walg_backup_dir }}"
+
+- name: Add weekly PostgreSQL logical dump cron job
+  cron:
+    name: "Weekly PostgreSQL logical dump"
+    minute: "0"
+    hour: "2"
+    weekday: "0"
+    job: >
+      pg_dump {{ database_name }} > {{ backup_dir }}/{{ database_name }}_backup_$(date +\%F).dump
+    user: postgres
+  tags:
+    - logical_dump
+
+#- name: Configure pg_probackup backup
+#  block:
+#    - name: Initialize pg_probackup repository
+#      command: pg_probackup init -B {{ pg_probackup_dir }}
+#      become_user: postgres
+#      ignore_errors: yes
+#
+#    - name: Perform full backup with pg_probackup
+#      command: >
+#        pg_probackup backup -B {{ pg_probackup_dir }} -b FULL -d {{ database_name }} --compress
+#      become_user: postgres
+#
+#    - name: Set up pg_probackup retention policy
+#      command: >
+#        pg_probackup delete -B {{ pg_probackup_dir }} --delete-expired
+#      become_user: postgres
+#  tags:
+#    - pg_probackup
+
+- name: Configure Barman backup
+  block:
+    - name: Check Barman configuration
+      stat:
+        path: /etc/barman.conf
+      register: barman_config
+
+    - name: Perform Barman backup
+      command: barman backup {{ postgres_cluster_name }}
+      become_user: barman
+      when: barman_config.stat.exists
+
+    - name: Verify Barman backup
+      command: barman check {{ postgres_cluster_name }}
+      become_user: barman
+      when: barman_config.stat.exists
+  tags:
+    - barman
+
+#- name: Configure WAL-G backup
+#  block:
+#    - name: Ensure WAL-G configuration exists
+#      stat:
+#        path: "{{ walg_config_path }}"
+#      register: walg_config
+
+#    - name: Perform full backup with WAL-G
+#      command: >
+#        PGHOST={{ postgres_host }}  PGDATABASE={{ database_name }} wal-g backup-push {{ pg_data_dir }}
+#      become_user: postgres
+#      environment:
+#        WALG_FILE_PREFIX: "{{ walg_backup_dir }}"
+#      when: walg_config.stat.exists
+#
+#    - name: Cleanup old WAL-G backups
+#      command: >
+#        PGHOST={{ postgres_host }} wal-g delete --confirm  --older-than {{ walg_retention_days }}
+#      become_user: postgres
+#      when: walg_config.stat.exists
+#  tags:
+#    - walg
+
+- name: Perform PostgreSQL physical backup
+  block:
+    - name: Stop PostgreSQL service
+      service:
+        name: postgresql
+        state: stopped
+
+    - name: Create physical backup of PostgreSQL data directory
+      command: rsync -av --delete "{{ pg_data_dir }}/" "{{ backup_dir }}/physical_backup/"
+      become_user: postgres
+
+    - name: Start PostgreSQL service
+      service:
+        name: postgresql
+        state: started
+  tags:
+    - physical_backup

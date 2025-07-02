@@ -1,0 +1,71 @@
+---
+- name: Verify interface exists
+  assert:
+    that:
+      - "'{{ keepalived_interface }}' in ansible_interfaces"
+    fail_msg: "????????? {{ keepalived_interface }} ?? ??????"
+
+- name: Install dependencies (jq, patroni) if needed
+  become: yes
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - jq
+    - keepalived
+  tags: keepalived
+
+- name: Create health check script directory
+  file:
+    path: /usr/local/bin/
+    state: directory
+    mode: 0755
+  tags: keepalived
+
+- name: Deploy Patroni health check script
+  template:
+    src: check_patroni.sh.j2
+    dest: /usr/local/bin/check_patroni.sh
+    owner: root
+    group: root
+    mode: 0755
+  tags: keepalived
+  notify: restart keepalived
+
+- name: Configure sudoers for patronictl
+  copy:
+    content: |
+      postgres ALL=(ALL) NOPASSWD: /usr/bin/patronictl
+      Defaults:postgres !requiretty
+    dest: /etc/sudoers.d/postgres-patroni
+    owner: root
+    group: root
+    mode: 0440
+    validate: 'visudo -cf %s'
+  tags: keepalived
+
+- name: Ensure /etc/keepalived exists
+  file:
+    path: /etc/keepalived
+    state: directory
+    mode: 0755
+  tags: keepalived
+
+- name: Configure Keepalived from template
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: 0644
+    force: true
+  tags: keepalived
+  notify: restart keepalived
+
+- name: Ensure Keepalived service is enabled and running
+  systemd:
+    name: keepalived
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  tags: keepalived

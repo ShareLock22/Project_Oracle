@@ -1,0 +1,21 @@
+- name: Восстановление демо-базы данных  
+  shell: "psql -U postgres -d postgres -f /tmp/demo-medium-20170815.sql  "  
+  become: yes  
+  become_user: postgres
+
+- name: Создание пользователя PostgreSQL
+  postgresql_user:
+    name: "{{ demo_db_user }}"
+    password: "{{ demo_db_password }}"
+    role_attr_flags: SUPERUSER
+  become: yes
+  become_user: postgres
+
+- name: Предоставление полного доступа к демо-базе данных
+  postgresql_privs:
+    db: "{{ demo_db_name }}"
+    roles: "{{ demo_db_user }}"
+    type: database
+    privs: ALL
+  become: yes
+  become_user: postgres

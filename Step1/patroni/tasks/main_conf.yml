@@ -1,0 +1,141 @@
+---
+- name: Ensure directories exist
+  block:
+    - name: Remove old PostgreSQL data directory (always)
+      file:
+        path: "{{ patroni_pg_data_dir }}"
+        state: absent
+
+    - name: Remove old WAL archive directory (always)
+      file:
+        path: "{{ patroni_wal_archive_dir }}"
+        state: absent
+
+    - name: Remove old SSL directory (always)
+      file:
+        path: "{{ patroni_ssl_dir }}"
+        state: absent
+
+    - name: Ensure PostgreSQL data directory
+      file:
+        path: "{{ patroni_pg_data_dir }}"
+        state: directory
+        owner: "{{ patroni_ssl_cert_owner }}"
+        group: "{{ patroni_ssl_cert_group }}"
+        mode: '0700'
+
+    - name: Ensure WAL archive directory
+      file:
+        path: "{{ patroni_wal_archive_dir }}"
+        state: directory
+        owner: "{{ patroni_ssl_cert_owner }}"
+        group: "{{ patroni_ssl_cert_group }}"
+        mode: '0700'
+
+    - name: Ensure SSL directory exists
+      file:
+        path: "{{ patroni_ssl_dir }}"
+        state: directory
+        owner: "{{ patroni_ssl_cert_owner }}"
+        group: "{{ patroni_ssl_cert_group }}"
+        mode: '0750'
+  tags: config
+
+- name: Copy etcd SSL certificates for Patroni
+  copy:
+    src: "/etc/etcd/ssl/{{ item }}"
+    dest: "{{ patroni_ssl_dir }}/{{ item }}"
+    remote_src: yes
+    owner: "{{ patroni_ssl_cert_owner }}"
+    group: "{{ patroni_ssl_cert_group }}"
+    mode: "{{ '0640' if item.endswith('.key') else '0644' }}"
+  with_items:
+    - ca.crt
+    - server.crt
+    - server.key
+  tags: ssl
+
+- name: Install PostgreSQL
+  become: yes
+  package:
+    name:
+      - postgresql-13
+      - postgresql-client-13
+      - postgresql-contrib-13
+  tags: install
+
+- name: Create symbolic link to patroni binary
+  file:
+    src: /usr/local/bin/patroni
+    dest: /usr/bin/patroni
+    state: link
+  tags: setup
+
+- name: Clean residual state in etcd
+  command: >
+    ETCDCTL_API=3 etcdctl --endpoints={{ patroni_etcd_hosts | join(',') }}
+    --cacert={{ patroni_ssl_dir }}/ca.crt
+    --cert={{ patroni_ssl_dir }}/server.crt
+    --key={{ patroni_ssl_dir }}/server.key
+    del {{ patroni_namespace }}{{ patroni_scope }} --prefix
+  when: cleanup_etcd_state
+  register: etcd_cleanup
+  changed_when: etcd_cleanup.rc == 0
+  ignore_errors: yes
+  tags: cleanup
+
+- name: Deploy Patroni config
+  template:
+    src: patroni.yml.j2
+    dest: /etc/patroni/patroni.yml
+    owner: "{{ patroni_ssl_cert_owner }}"
+    group: "{{ patroni_ssl_cert_group }}"
+    mode: 0640
+  notify: Restart Patroni
+  tags: config
+
+- name: Configure systemd service
+  template:
+    src: patroni.service.j2
+    dest: /etc/systemd/system/patroni.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Reload systemd
+    - Restart Patroni
+  tags: config
+
+- name: Initialize PostgreSQL if needed
+  block:
+    - name: Check for existing cluster
+      stat:
+        path: "{{ patroni_pg_data_dir }}/PG_VERSION"
+      register: pg_data_status
+
+    - name: Check PostgreSQL binaries
+      stat:
+        path: /usr/lib/postgresql/13/bin/initdb
+      register: pg_binaries
+
+    - name: Fail if PostgreSQL not installed
+      fail:
+        msg: "PostgreSQL 13 not installed. Please install postgresql-13 package."
+      when: not pg_binaries.stat.exists
+
+    - name: Init new PostgreSQL cluster
+      command: >
+        sudo -u postgres /usr/lib/postgresql/13/bin/initdb -D {{ patroni_pg_data_dir }}
+        --encoding=UTF8 --locale=en_US.UTF-8 --data-checksums
+      when: not pg_data_status.stat.exists
+      args:
+        chdir: /tmp
+  tags: init
+
+- name: Ensure service is running
+  systemd:
+    name: patroni
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  tags: service

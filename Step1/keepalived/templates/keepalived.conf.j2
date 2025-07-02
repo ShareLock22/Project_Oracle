@@ -1,0 +1,48 @@
+global_defs {
+    router_id {{ inventory_hostname }}
+    enable_script_security
+    script_user root
+}
+
+vrrp_script chk_patroni {
+    script "/usr/local/bin/check_patroni.sh"
+    interval 2
+    timeout 3
+    rise 2
+    fall 2
+    user root
+}
+
+vrrp_instance VI_PG {
+    state BACKUP
+    interface enp0s1
+    virtual_router_id 51
+    priority {{ keepalived_priority | default(90) }}
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+
+    unicast_src_ip {{ ansible_host }}
+    unicast_peer {
+        {% for host in groups['etcd'] %}
+            {% if host != inventory_hostname %}
+        {{ hostvars[host].ansible_host }}
+            {% endif %}
+        {% endfor %}
+    }
+
+    virtual_ipaddress {
+        {{ vip_address }}/24 dev enp0s1
+    }
+
+    track_script {
+        chk_patroni
+    }
+
+    notify_master "/usr/local/bin/vip-notify.sh master"
+    notify_backup "/usr/local/bin/vip-notify.sh backup"
+    notify_fault "/usr/local/bin/vip-notify.sh fault"
+}

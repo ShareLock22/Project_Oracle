@@ -1,0 +1,68 @@
+---
+- name: Установка Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: latest
+    update_cache: yes
+
+- name: Создаем основную директорию для pgAdmin
+  ansible.builtin.file:
+    path: "{{ pgadmin_data_dir }}"
+    state: directory
+    owner: "{{ pgadmin_user }}"
+    group: "{{ pgadmin_group }}"
+    mode: '0755'
+
+- name: Создаем поддиректории с правильными правами
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ pgadmin_user }}"
+    group: "{{ pgadmin_group }}"
+    mode: '0775'  # Права на запись для группы
+  loop:
+    - "{{ pgadmin_data_dir }}/sessions"
+    - "{{ pgadmin_data_dir }}/storage"
+
+- name: Устанавливаем корректные права на существующие файлы
+  ansible.builtin.command: "chown -R {{ pgadmin_user }}:{{ pgadmin_group }} {{ pgadmin_data_dir }}"
+  when: pgadmin_fix_ownership | default(true)
+
+- name: Запускаем контейнер pgAdmin4 с корректными правами
+  community.docker.docker_container:
+    name: pgadmin4
+    image: dpage/pgadmin4:latest
+    volumes:
+      - "{{ pgadmin_data_dir }}:/var/lib/pgadmin:z" 
+    env:
+      PGADMIN_DEFAULT_EMAIL: "{{ pgadmin_default_email }}"
+      PGADMIN_DEFAULT_PASSWORD: "{{ pgadmin_default_password }}"
+    ports:
+      - "127.0.0.1:{{ pgadmin_port }}:80"
+    restart_policy: unless-stopped
+    user: "{{ pgadmin_user }}" 
+
+- name: Настраиваем Nginx как reverse proxy
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/conf.d/pgadmin.conf
+  notify: reload nginx
+
+- name: Активируем конфигурацию pgAdmin
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/pgadmin.conf
+    dest: /etc/nginx/sites-enabled/pgadmin.conf
+    state: link
+    force: yes
+
+- name: Отключаем дефолтный сайт Nginx
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: reload nginx
+
+- name: Проверяем конфигурацию Nginx
+  ansible.builtin.command: nginx -t
+  register: nginx_test_result
+  changed_when: false
+  notify: reload nginx

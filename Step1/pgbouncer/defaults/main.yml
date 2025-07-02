@@ -1,0 +1,10 @@
+---
+pgbouncer_user: "postgres"
+pgbouncer_password: 12345678
+
+pgbouncer_md5_hash: >-
+  "{{ pgbouncer_user }}:pgbouncer:{{ pgbouncer_password | mandatory }}"
+pgbouncer_user_hash: >-
+  "{{ pgbouncer_md5_hash | hash('md5') | regex_replace('^', 'md5') }}"
+
+patroni_master_vip: "192.168.0.100"

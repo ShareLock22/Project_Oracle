@@ -1,0 +1,28 @@
+global
+    log /dev/log local0
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log global
+    mode tcp
+    option tcplog
+    option dontlognull
+    retries 3
+    timeout connect 5s
+    timeout client  300s
+    timeout server  300s
+
+frontend postgresql_front
+    bind {{ haproxy_frontend_bind }}
+    default_backend pgbouncer_back
+
+backend pgbouncer_back
+    mode tcp
+    balance uri
+    hash-type map-based
+    server pgbouncer {{ haproxy_backend_server }} check

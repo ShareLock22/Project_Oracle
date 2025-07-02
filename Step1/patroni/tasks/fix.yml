@@ -1,0 +1,45 @@
+- name: Stop Patroni service
+  systemd:
+    name: patroni
+    state: stopped
+    enabled: no
+
+- name: Clean residual state in etcd
+  command: |
+    etcdctl --endpoints=https://192.168.0.108:2379,https://192.168.0.109:2379,https://192.168.0.110:2379  \
+      --cacert=/etc/patroni/ssl/ca.crt \
+      --cert=/etc/patroni/ssl/server.crt \
+      --key=/etc/patroni/ssl/server.key \
+      del {{ patroni_namespace }}{{ patroni_scope }} --prefix
+  environment:
+    ETCDCTL_API: "3"
+  ignore_errors: yes
+  delegate_to: node1
+  run_once: true
+
+- name: Remove PostgreSQL data directory
+  file:
+    path: "{{ patroni_pg_data_dir }}"
+    state: absent
+
+- name: Recreate PostgreSQL data directory
+  file:
+    path: "{{ patroni_pg_data_dir }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+
+- name: Remove WAL archive directory contents
+  file:
+    path: "{{ patroni_wal_archive_dir }}/{{ item }}"
+    state: absent
+  with_filetree:
+    - "{{ patroni_wal_archive_dir }}"
+  when: remove_old_dirs | default(true)
+
+- name: Start Patroni service
+  systemd:
+    name: patroni
+    state: started
+    enabled: yes

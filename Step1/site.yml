@@ -1,0 +1,53 @@
+- name: Этап 1 - Настройка базовых пакетов и пользователей
+  hosts: all
+  become: true
+  roles:
+#     - packages
+#     - users/create_users
+#     - users/configure_sudo
+#     - postgre/configure_postgresql
+#     - postgre/demo_db
+
+- hosts: etcd
+  tasks:
+    - shell: ip -f inet addr show enp0s1 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p'
+      register: privateIP
+
+- name: Этап 2 – Подготовка для TLS
+  hosts: localhost
+  become: false
+  roles:
+  # - tls
+
+- name: Этап 2 - Настройка Etcd, PostgreSQL и Patroni на всех узлах
+  hosts: etcd
+  become: true
+  roles:
+#     - timesync
+#     - dumps
+#       - etcd
+#      - postgre/configure_postgresql
+#       - patroni
+#      - keepalived
+#       - zabbix_monitoring
+
+- name: Этап 3 – Настройка HAproxy и pgbouncer 
+  hosts: proxy
+  become: yes
+  roles:
+#        - pgbouncer
+#       - haproxy
+
+- name: Этап 3 – Настройка Nginx и PGAdmin
+  hosts: proxy
+  become: yes
+  roles: 
+  #    - docker
+  #    - nginx
+       - zabbix_server
+
+- name: Этап 3 – Настройка Zabbix агентов
+  hosts: all
+  become: yes
+  roles: 
+  #      - monitoring

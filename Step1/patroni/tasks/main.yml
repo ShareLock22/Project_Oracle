@@ -1,0 +1,30 @@
+---
+    - name: Deploy Patroni config
+      template:
+        src: patroni.yml.j2
+        dest: /etc/patroni/patroni.yml
+        owner: "{{ patroni_ssl_cert_owner }}"
+        group: "{{ patroni_ssl_cert_group }}"
+        mode: 0640
+      notify: Restart Patroni
+      tags: config
+
+    - name: Configure systemd service
+      template:
+        src: patroni.service.j2
+        dest: /etc/systemd/system/patroni.service
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - Reload systemd
+        - Restart Patroni
+      tags: config
+
+    - name: Ensure service is running
+      systemd:
+        name: patroni
+        state: started
+        enabled: yes
+        daemon_reload: yes
+      tags: service

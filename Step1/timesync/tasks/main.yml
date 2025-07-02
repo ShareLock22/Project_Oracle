@@ -1,0 +1,42 @@
+---
+- name: Set timezone to UTC
+  timezone:
+    name: Asia/Krasnoyarsk
+  tags: timesync
+
+- name: Install chrony
+  apt:
+    name: chrony
+    state: latest
+    update_cache: yes
+  tags: timesync
+
+- name: Configure chrony servers
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart chrony
+  tags: timesync
+
+- name: Ensure chrony is running and enabled
+  service:
+    name: chronyd
+    state: started
+    enabled: yes
+  tags: timesync
+
+- name: Force immediate time synchronization
+  command: chronyc makestep
+  register: chrony_step
+  changed_when: "'200 OK' in chrony_step.stdout"
+  tags: timesync
+
+- name: Verify time synchronization
+  command: timedatectl show --property=NTP --value
+  register: time_sync
+  failed_when: time_sync.stdout != "yes"
+  changed_when: false
+  tags: timesync

@@ -1,0 +1,16 @@
+- name: Ensure wheel group exists
+  group:
+    name: wheel
+    state: present
+
+- name: Create users
+  user:
+    name: "{{ item.name }}"
+    state: present
+    groups: wheel
+    append: yes
+    password: "{{ item.password | password_hash('sha512') }}"
+    shell: /bin/bash
+    create_home: yes
+  loop: "{{ users }}"
+  when: users is defined

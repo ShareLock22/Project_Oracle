@@ -1,0 +1,11 @@
+# roles/etcd/defaults/main.yml
+---
+etcd_version: "v3.5.0"
+etcd_data_dir: "/var/lib/etcd"
+etcd_client_port: 2379
+etcd_peer_port: 2380
+etcd_cluster_token: "etcd-cluster-01"
+etcd_enable_tls: true
+etcd_ca_cert_path: "{{ playbook_dir }}/artifacts/ca.crt"
+etcd_member_cert_path: "{{ playbook_dir }}/artifacts/{{ inventory_hostname }}.crt"
+etcd_member_key_path: "{{ playbook_dir }}/artifacts/{{ inventory_hostname }}.key"

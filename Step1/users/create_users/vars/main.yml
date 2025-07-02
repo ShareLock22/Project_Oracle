@@ -1,0 +1,4 @@
+users:
+  - { name: 'Egor', password: '12345678' }
+  - { name: 'Denis', password: '12345678' }
+  - { name: 'Yaroslav', password: '12345678' }

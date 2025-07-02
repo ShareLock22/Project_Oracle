@@ -1,0 +1,4 @@
+artifacts/
+zabbix_agent/
+zabbix_monitoring/
+zabbix_server/

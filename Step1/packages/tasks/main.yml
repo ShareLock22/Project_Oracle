@@ -1,0 +1,17 @@
+- name: Обновление индекса пакетов apt
+  apt:
+    update_cache: yes
+
+- name: Установка пакетов
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ packages }}"
+  register: result
+  ignore_errors: yes
+  changed_when: "'0 upgraded, 0 newly installed' not in result.stdout"
+
+- name: Установка PostgreSQL и необходимых пакетов
+  apt:
+    name: "{{ postgres_packages }}"
+    state: present
