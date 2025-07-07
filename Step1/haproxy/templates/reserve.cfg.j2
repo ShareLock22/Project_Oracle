@@ -1,0 +1,53 @@
+global
+    log /dev/log local0
+    maxconn {{ haproxy_maxconn }}
+    stats socket /var/run/haproxy.sock mode 660 level admin expose-fd listeners
+    tune.ssl.default-dh-param {{ haproxy_dh_param }}
+
+defaults
+    log global
+    mode tcp
+    option tcplog
+    timeout connect {{ haproxy_timeout_connect }}s
+    timeout client {{ haproxy_timeout_client }}s
+    timeout server {{ haproxy_timeout_server }}s
+    retries {{ haproxy_retries }}
+
+# ========== FRONTENDS ==========
+
+frontend pg_write
+    bind *:{{ haproxy_write_port }}
+    default_backend pg_master
+
+frontend pg_read
+    bind *:{{ haproxy_read_port }}
+    default_backend pg_replicas
+
+# ========== BACKENDS ==========
+
+backend pg_master
+    option httpchk GET {{ haproxy_master_check }}
+    http-check expect status {{ haproxy_expected_status }}
+    server pg1 {{ haproxy_master_host }}:{{ postgres_port }} check port={{ patroni_api_port }} inter {{ haproxy_check_interval }}s fall {{ haproxy_fall_count }} rise {{ haproxy_rise_count }}
+
+backend pg_replicas
+    balance {{ haproxy_balance_method }}
+    option httpchk GET {{ haproxy_replica_check }}
+    http-check expect status {{ haproxy_expected_status }}
+    
+    {% for replica in postgres_replicas %}
+    server {{ replica.name }} {{ replica.host }}:{{ postgres_port }} check port={{ patroni_api_port }} inter {{ haproxy_check_interval }}s
+    {% endfor %}
+    
+    {% if haproxy_backup_replicas is defined %}
+    {% for backup in haproxy_backup_replicas %}
+    server {{ backup.name }} {{ backup.host }}:{{ postgres_port }} check port={{ patroni_api_port }} inter {{ haproxy_check_interval }}s backup
+    {% endfor %}
+    {% endif %}
+
+listen stats
+    bind *:{{ haproxy_stats_port }}
+    mode http
+    stats enable
+    stats uri {{ haproxy_stats_uri }}
+    stats refresh {{ haproxy_stats_refresh }}s

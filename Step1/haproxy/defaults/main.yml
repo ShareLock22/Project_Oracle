@@ -1,3 +1,46 @@
 ---
 haproxy_frontend_bind: "*:5432"
 haproxy_backend_server: "127.0.0.1:6432"
+
+# reverse defaults 
+# Основные параметры
+haproxy_maxconn: 5000
+haproxy_dh_param: 2048
+haproxy_timeout_connect: 5
+haproxy_timeout_client: 30
+haproxy_timeout_server: 30
+haproxy_retries: 3
+
+# Порта
+haproxy_write_port: 5001
+haproxy_read_port: 5000
+postgres_port: 5432
+patroni_api_port: 8008
+haproxy_stats_port: 8404
+
+# Health checks
+haproxy_check_interval: 2
+haproxy_fall_count: 2
+haproxy_rise_count: 2
+haproxy_master_check: "/master"
+haproxy_replica_check: "/replica"
+haproxy_expected_status: 200
+
+# Балансировка
+haproxy_balance_method: "leastconn"
+
+# Статистика
+haproxy_stats_uri: "/monitor"
+haproxy_stats_refresh: 5
+
+# Хосты
+haproxy_master_host: "192.168.1.100"  # VIP для мастера
+
+# Список реплик
+postgres_replicas:
+  - { name: "pg1", host: "192.168.1.101" }
+  - { name: "pg2", host: "192.168.1.102" }
+
+# Резервные реплики (опционально)
+haproxy_backup_replicas:
+  - { name: "pg3", host: "192.168.1.103" }
