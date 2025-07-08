@@ -34,13 +34,10 @@ haproxy_stats_uri: "/monitor"
 haproxy_stats_refresh: 5
 
 # Хосты
-haproxy_master_host: "192.168.1.100"  # VIP для мастера
-
+master_vip_adress: "192.168.1.100"  # VIP для мастера
+master_name: "pgm"
 # Список реплик
 postgres_replicas:
   - { name: "pg1", host: "192.168.1.101" }
   - { name: "pg2", host: "192.168.1.102" }
-
-# Резервные реплики (опционально)
-haproxy_backup_replicas:
   - { name: "pg3", host: "192.168.1.103" }

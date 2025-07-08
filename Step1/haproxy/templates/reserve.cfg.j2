@@ -13,7 +13,7 @@ defaults
     timeout server {{ haproxy_timeout_server }}s
     retries {{ haproxy_retries }}
 
-# ========== FRONTENDS ==========
+
 
 frontend pg_write
     bind *:{{ haproxy_write_port }}
@@ -23,7 +23,7 @@ frontend pg_read
     bind *:{{ haproxy_read_port }}
     default_backend pg_replicas
 
-# ========== BACKENDS ==========
+
 
 backend pg_master
     option httpchk GET {{ haproxy_master_check }}
@@ -44,6 +44,8 @@ backend pg_replicas
     server {{ backup.name }} {{ backup.host }}:{{ postgres_port }} check port={{ patroni_api_port }} inter {{ haproxy_check_interval }}s backup
     {% endfor %}
     {% endif %}
+
+
 
 listen stats
     bind *:{{ haproxy_stats_port }}
