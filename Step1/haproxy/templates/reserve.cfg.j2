@@ -13,43 +13,30 @@ defaults
     timeout server {{ haproxy_timeout_server }}s
     retries {{ haproxy_retries }}
 
-
-
-frontend pg_write
+listen postgres_master
     bind *:{{ haproxy_write_port }}
-    default_backend pg_master
+    mode tcp
+    option tcplog
+    server {{ master_server_name }} {{ master_vip_address }}:{{ postgres_port }} check port={{ patroni_api_port }}
+    default-server inter {{ haproxy_check_interval }}s fall {{ haproxy_fall_count }} rise {{ haproxy_rise_count }} on-marked-down shutdown-sessions
 
-frontend pg_read
+listen postgres_replicas
     bind *:{{ haproxy_read_port }}
-    default_backend pg_replicas
-
-
-
-backend pg_master
-    option httpchk GET {{ haproxy_master_check }}
-    http-check expect status {{ haproxy_expected_status }}
-    server pg1 {{ haproxy_master_host }}:{{ postgres_port }} check port={{ patroni_api_port }} inter {{ haproxy_check_interval }}s fall {{ haproxy_fall_count }} rise {{ haproxy_rise_count }}
-
-backend pg_replicas
-    balance {{ haproxy_balance_method }}
+    mode tcp
+    option tcplog
     option httpchk GET {{ haproxy_replica_check }}
     http-check expect status {{ haproxy_expected_status }}
+    balance {{ haproxy_balance_method }}
+    default-server inter {{ haproxy_check_interval }}s fall {{ haproxy_fall_count }} rise {{ haproxy_rise_count }} on-marked-down shutdown-sessions
     
     {% for replica in postgres_replicas %}
-    server {{ replica.name }} {{ replica.host }}:{{ postgres_port }} check port={{ patroni_api_port }} inter {{ haproxy_check_interval }}s
+    server {{ replica.name }} {{ replica.host }}:{{ postgres_port }} check port={{ patroni_api_port }}
     {% endfor %}
     
-    {% if haproxy_backup_replicas is defined %}
-    {% for backup in haproxy_backup_replicas %}
-    server {{ backup.name }} {{ backup.host }}:{{ postgres_port }} check port={{ patroni_api_port }} inter {{ haproxy_check_interval }}s backup
-    {% endfor %}
-    {% endif %}
-
-
 
 listen stats
     bind *:{{ haproxy_stats_port }}
     mode http
-    stats enable
+    stats enableha
     stats uri {{ haproxy_stats_uri }}
     stats refresh {{ haproxy_stats_refresh }}s
