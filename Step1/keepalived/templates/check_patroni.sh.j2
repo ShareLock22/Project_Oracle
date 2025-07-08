@@ -1,25 +1,23 @@
 #!/bin/bash
 set -e
 
-CERT="/etc/patroni/ssl/server.crt"
-KEY="/etc/patroni/ssl/server.key"
-CA_CERT="/etc/patroni/ssl/ca.crt"
-PATRONI_API="https://127.0.0.1:8008"
+# Настройки
+PATRONI_API="http://127.0.0.1:8008"
+MASTER_ENDPOINT="$PATRONI_API/master"
 LOGFILE="/var/log/check_patroni.log"
 
-# ???????? ??? ???????? ????
+# Получаем имя текущей ноды
 LOCAL_NODE=$(hostname -s)
 
-# ???????? ??? ??????
-LEADER_NODE=$(curl -k -s --cert "$CERT" --key "$KEY" --cacert "$CA_CERT" \
-"$PATRONI_API/cluster" | jq -r '.members[] | select(.role == "leader") | .name')
+echo "$(date): Проверка состояния ноды $LOCAL_NODE" >> "$LOGFILE"
 
-echo "$(date): ??????? ????: $LOCAL_NODE | ?????: $LEADER_NODE" >> "$LOGFILE"
+# Выполняем HEAD-запрос к /master и получаем HTTP-код
+RESPONSE_CODE=$(curl -sI "$MASTER_ENDPOINT" | grep "HTTP/" | awk '{print $2}')
 
-if [[ "$LOCAL_NODE" == "$LEADER_NODE" ]]; then
-    echo "$(date): ???? $LOCAL_NODE ???????? ???????" >> "$LOGFILE"
+if [[ "$RESPONSE_CODE" == "200" ]]; then
+    echo "$(date): Нода $LOCAL_NODE является мастером (HTTP $RESPONSE_CODE)" >> "$LOGFILE"
     exit 0
 else
-    echo "$(date): ???? $LOCAL_NODE ?? ???????? ???????" >> "$LOGFILE"
+    echo "$(date): Нода $LOCAL_NODE НЕ является мастером (HTTP $RESPONSE_CODE)" >> "$LOGFILE"
     exit 1
 fi
